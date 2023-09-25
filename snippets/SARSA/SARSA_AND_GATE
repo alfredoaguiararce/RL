@@ -1,0 +1,54 @@
+import random
+
+# Definición de estados, acciones y recompensas
+states = [(0, 0), (0, 1), (1, 0), (1, 1)]
+actions = [0, 1]  # Salida 0 o 1
+rewards = {(0, 0, 0): 1, (0, 1, 0): 0, (1, 0, 0): 0, (1, 1, 1): 1}  # Recompensas
+
+# Parámetros de SARSA
+alpha = 0.1  # Tasa de aprendizaje
+gamma = 0.9  # Factor de descuento
+epsilon = 0.1  # Probabilidad de exploración
+
+# Inicialización de la tabla Q
+Q = {}
+for state in states:
+    for action in actions:
+        Q[(state, action)] = 0.0
+
+# Función epsilon-greedy para selección de acciones
+def epsilon_greedy(state):
+    if random.random() < epsilon:
+        return random.choice(actions)
+    else:
+        return max(actions, key=lambda a: Q[(state, a)])
+
+# Entrenamiento de SARSA
+num_episodes = 10000
+for _ in range(num_episodes):
+    state = random.choice(states)  # Estado inicial aleatorio
+    action = epsilon_greedy(state)
+
+    while True:
+        next_state = random.choice(states)  # Estado siguiente aleatorio
+        next_action = epsilon_greedy(next_state)
+        reward = rewards.get((state[0], state[1], action), 0)
+
+        # Actualización de Q usando la ecuación SARSA
+        Q[(state, action)] = Q[(state, action)] + alpha * (reward + gamma * Q[(next_state, next_action)] - Q[(state, action)])
+
+        if state == (1, 1):
+            break  # Fin del episodio
+
+        state = next_state
+        action = next_action
+
+# Evaluación de la política aprendida
+correct = 0
+for state in states:
+    action = epsilon_greedy(state)
+    if action == state[0] and state[0] == state[1]:
+        correct += 1
+
+print(f"Politica aprendida: {Q}")
+print(f"Precision en la compuerta AND: {correct / len(states) * 100}%")
